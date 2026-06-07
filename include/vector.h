@@ -1,5 +1,8 @@
 #pragma once
 #include "const.h"
+#include <math.h>
+#include <stdlib.h>
+#include "math_utility.h"
 
 typedef struct
 {
@@ -14,10 +17,28 @@ typedef struct
 } AppliedVector2D;
 
 // scalar mutiplication
-void scalar_mult(type_t k, Vector2D *v, Vector2D *result);
+Vector2D scalar_mult(type_t k, Vector2D v);
 
 // sum two vectors
-void vector_sum(Vector2D *v1, Vector2D *v2, Vector2D *result);
+Vector2D vector_sum(Vector2D v1, Vector2D v2);
 
 // subtract two vectors
-void vector_sub(Vector2D *v1, Vector2D *v2, Vector2D *result);
+Vector2D vector_sub(Vector2D v1, Vector2D v2);
+
+// division
+Vector2D vector_div(Vector2D v1, type_t v2);
+
+// vector magnitude
+type_t vector_mag(Vector2D v1);
+
+// vector normalization
+Vector2D vector_normalize(Vector2D v1);
+
+//dot product
+type_t dot_product(Vector2D v1, Vector2D v2);
+
+//cross product
+type_t cross_product(Vector2D v1, Vector2D v2);
+
+// angle between two vectors
+type_t angle_between(Vector2D v1, Vector2D v2);
