@@ -1,4 +1,4 @@
-#include "../include/math_utility.h"
+#include "math_utility.h"
 
 
 type_t deg2rad(type_t deg)

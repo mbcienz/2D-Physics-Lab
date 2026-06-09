@@ -1,4 +1,4 @@
-#include "../include/vector.h"
+#include "vector.h"
 
 // scalar mutiplication
 Vector2D scalar_mult(type_t k, Vector2D v)
@@ -58,7 +58,7 @@ type_t vector_mag(Vector2D v1)
 // vector normalization
 Vector2D vector_normalize(Vector2D v1)
 {
-    type_t mag = sqrt(v1.x * v1.x + v1.y * v1.y);
+    type_t mag = vector_mag(v1);
     Vector2D norm = {0.0, 0.0}; 
     if (mag == 0.0)
     {

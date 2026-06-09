@@ -1,0 +1,118 @@
+#include "system_input.h"
+
+// init the struct
+void input_init(InputState *input) 
+{
+    // init to false all the keyboard keys
+    for (int i = 0; i < SDL_NUM_SCANCODES; i++) 
+    {
+        input->keys_down[i] = false;
+        input->keys_just_pressed[i] = false;
+    }
+
+    // init the mouse state
+    input->mouse_x = 0;
+    input->mouse_y = 0;
+
+    input->mouse_left_down = false;
+    input->mouse_right_down = false;
+    input->mouse_left_clicked = false;
+    input->mouse_right_clicked = false;
+
+    input->click_x = 0;
+    input->click_y = 0;
+
+    input->mouse_wheel_scroll = 0;
+
+    
+    input->window_closed = false;
+}
+
+// update the struct
+void input_update(InputState *input) 
+{
+    SDL_Event event;
+
+    // 1. RESET DEGLI EVENTI ISTANTANEI (durano solo 1 frame)
+    input->mouse_left_clicked = false;
+    input->mouse_right_clicked = false;
+    input->mouse_wheel_scroll = 0;
+    for (int i = 0; i < SDL_NUM_SCANCODES; i++) 
+    {
+        input->keys_just_pressed[i] = false;
+    }
+
+    // 2. AGGIORNAMENTO STATO CONTINUO (Mouse posizione e tasti premuti)
+    Uint32 mouse_buttons = SDL_GetMouseState(&input->mouse_x, &input->mouse_y);
+    input->mouse_left_down = (mouse_buttons & SDL_BUTTON(SDL_BUTTON_LEFT)) != 0;
+    input->mouse_right_down = (mouse_buttons & SDL_BUTTON(SDL_BUTTON_RIGHT)) != 0;
+
+    // 3. SVUOTAMENTO CODA EVENTI SDL
+    while (SDL_PollEvent(&event)) 
+    {
+        switch (event.type) 
+        {
+            case SDL_QUIT:
+                input->window_closed = true;
+                break;
+
+            case SDL_KEYDOWN:
+                // Ignora la ripetizione automatica del sistema operativo se tieni premuto
+                if (event.key.repeat == 0) 
+                {
+                    SDL_Scancode scancode = event.key.keysym.scancode;
+                    if (scancode < SDL_NUM_SCANCODES) 
+                    {
+                        input->keys_down[scancode] = true;
+                        input->keys_just_pressed[scancode] = true; // Attivo solo per questo frame
+                    }
+                }
+                break;
+
+            case SDL_KEYUP:
+                {
+                    SDL_Scancode scancode = event.key.keysym.scancode;
+                    if (scancode < SDL_NUM_SCANCODES) 
+                    {
+                        input->keys_down[scancode] = false;
+                    }
+                }
+                break;
+
+            case SDL_MOUSEBUTTONDOWN:
+                if (event.button.button == SDL_BUTTON_LEFT) 
+                {
+                    input->mouse_left_clicked = true;
+                    input->click_x = event.button.x;
+                    input->click_y = event.button.y;
+                }
+                else if (event.button.button == SDL_BUTTON_RIGHT) 
+                {
+                    input->mouse_right_clicked = true;
+                    input->click_x = event.button.x;
+                    input->click_y = event.button.y;
+                }
+                break;
+
+            case SDL_MOUSEWHEEL:
+                input->mouse_wheel_scroll = event.wheel.y; // 1 = su, -1 = giù
+                break;
+        }
+    }
+}
+
+
+// return true if the input is continuous
+bool input_is_key_down(const InputState *input, SDL_Scancode scancode) 
+{
+    if (scancode >= SDL_NUM_SCANCODES) return false;
+    return input->keys_down[scancode];
+}
+
+
+// return true if the input is toggle
+bool input_is_key_just_pressed(const InputState *input, SDL_Scancode scancode) 
+{
+    if (scancode >= SDL_NUM_SCANCODES) return false;
+    return input->keys_just_pressed[scancode];
+}
