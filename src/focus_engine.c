@@ -145,27 +145,66 @@ void draw_grid(FocusEngine *fe)
 }
 
 
-// draw a circle ( IN WORLD COORDINATE )
-void draw_circle(FocusEngine *fe, Vector2D center, float r, Color c)
+// draw a circle ( IN WORLD COORDINATE ). The function uses the Scanline Circle Algorithm
+void draw_circle(FocusEngine *fe, Vector2D center, float r, Color c) 
 {
-	SDL_SetRenderDrawColor(fe->renderer, c.r, c.g, c.b, c.a);
-	int i, j;
+    SDL_SetRenderDrawColor(fe->renderer, c.r, c.g, c.b, c.a);
 
-	int screen_cx = coordx_to_screenx(fe, center.x);
-    int screen_cy = coordy_to_screeny(fe, center.y);
-	int screen_r = (int)(r * fe->camera.scale);
-	if (screen_r <= 0) return;
+    int cx = coordx_to_screenx(fe, center.x);
+    int cy = coordy_to_screeny(fe, center.y); 
+    int radius = (int)(r * fe->camera.scale);
 
-	for ( i = screen_cx - screen_r; i <= screen_cx + screen_r; i++ )
-	{
-		for( j = screen_cy - screen_r ; j <= screen_cy + screen_r; j++)
-		{
-			int dx = i - screen_cx;
-            int dy = j - screen_cy;
-			if( dx * dx + dy * dy <= screen_r * screen_r )
-				SDL_RenderDrawPoint(fe->renderer, i, j);
-		}
-	}
+    if (radius <= 0) return;
+
+    // clip if is out of the screen
+    if (cx + radius < 0 || cx - radius >= fe->width || cy + radius < 0 || cy - radius >= fe->height) 
+		return;
+
+    int x = radius;
+    int y = 0;
+    int x_change = 1 - 2 * radius;
+    int y_change = 1;
+    int radius_error = 0;
+
+    while (x >= y) {
+        // Tracciamo le linee per la metà superiore e inferiore (accoppiate specchiate solo in Y)
+        // Questo disegna i blocchi centrali del cerchio
+        int y1 = cy + y;
+        int y2 = cy - y;
+        if (y1 >= 0 && y1 < fe->height) {
+            int left = (cx - x) < 0 ? 0 : (cx - x);
+            int right = (cx + x) >= fe->width ? fe->width - 1 : (cx + x);
+            if (left <= right) SDL_RenderDrawLine(fe->renderer, left, y1, right, y1);
+        }
+        if (y2 >= 0 && y2 < fe->height && y != 0) { // evita di ridisegnare il centro due volte se y == 0
+            int left = (cx - x) < 0 ? 0 : (cx - x);
+            int right = (cx + x) >= fe->width ? fe->width - 1 : (cx + x);
+            if (left <= right) SDL_RenderDrawLine(fe->renderer, left, y2, right, y2);
+        }
+
+        // Questo disegna le "punte" (i poli) alto e basso del cerchio, invertendo le coordinate
+        int y3 = cy + x;
+        int y4 = cy - x;
+        if (y3 >= 0 && y3 < fe->height && x != y) {
+            int left = (cx - y) < 0 ? 0 : (cx - y);
+            int right = (cx + y) >= fe->width ? fe->width - 1 : (cx + y);
+            if (left <= right) SDL_RenderDrawLine(fe->renderer, left, y3, right, y3);
+        }
+        if (y4 >= 0 && y4 < fe->height && x != y) {
+            int left = (cx - y) < 0 ? 0 : (cx - y);
+            int right = (cx + y) >= fe->width ? fe->width - 1 : (cx + y);
+            if (left <= right) SDL_RenderDrawLine(fe->renderer, left, y4, right, y4);
+        }
+
+        y++;
+        radius_error += y_change;
+        y_change += 2;
+        if (2 * radius_error + x_change > 0) {
+            x--;
+            radius_error += x_change;
+            x_change += 2;
+        }
+    }
 }
 
 // draw a circle with a fixed radius in screen pixels ( NOT WORLD COORDINATE)
@@ -173,24 +212,58 @@ void draw_circle_screen(FocusEngine *fe, Vector2D center, int pixel_r, Color c)
 {
     SDL_SetRenderDrawColor(fe->renderer, c.r, c.g, c.b, c.a);
 
-    // center is still converted because it tracks pan/zoom position
-    int screen_cx = coordx_to_screenx(fe, center.x);
-    int screen_cy = coordy_to_screeny(fe, center.y);
+    int cx = coordx_to_screenx(fe, center.x);
+    int cy = coordy_to_screeny(fe, center.y);
 
     if (pixel_r <= 0) return;
 
-    int i, j;
-    for (i = screen_cx - pixel_r; i <= screen_cx + pixel_r; i++)
-    {
-        for (j = screen_cy - pixel_r; j <= screen_cy + pixel_r; j++)
-        {
-            int dx = i - screen_cx;
-            int dy = j - screen_cy;
+    // clip if is out of the screen
+    if (cx + pixel_r < 0 || cx - pixel_r >= fe->width || cy + pixel_r < 0 || cy - pixel_r >= fe->height) 
+		return;
 
-            if ((dx * dx + dy * dy) <= (pixel_r * pixel_r))
-            {
-                SDL_RenderDrawPoint(fe->renderer, i, j);
-            }
+    int x = pixel_r;
+    int y = 0;
+    int x_change = 1 - 2 * pixel_r;
+    int y_change = 1;
+    int radius_error = 0;
+
+    while (x >= y) {
+        // Tracciamo le linee per la metà superiore e inferiore (accoppiate specchiate solo in Y)
+        // Questo disegna i blocchi centrali del cerchio
+        int y1 = cy + y;
+        int y2 = cy - y;
+        if (y1 >= 0 && y1 < fe->height) {
+            int left = (cx - x) < 0 ? 0 : (cx - x);
+            int right = (cx + x) >= fe->width ? fe->width - 1 : (cx + x);
+            if (left <= right) SDL_RenderDrawLine(fe->renderer, left, y1, right, y1);
+        }
+        if (y2 >= 0 && y2 < fe->height && y != 0) { // evita di ridisegnare il centro due volte se y == 0
+            int left = (cx - x) < 0 ? 0 : (cx - x);
+            int right = (cx + x) >= fe->width ? fe->width - 1 : (cx + x);
+            if (left <= right) SDL_RenderDrawLine(fe->renderer, left, y2, right, y2);
+        }
+
+        // Questo disegna le "punte" (i poli) alto e basso del cerchio, invertendo le coordinate
+        int y3 = cy + x;
+        int y4 = cy - x;
+        if (y3 >= 0 && y3 < fe->height && x != y) {
+            int left = (cx - y) < 0 ? 0 : (cx - y);
+            int right = (cx + y) >= fe->width ? fe->width - 1 : (cx + y);
+            if (left <= right) SDL_RenderDrawLine(fe->renderer, left, y3, right, y3);
+        }
+        if (y4 >= 0 && y4 < fe->height && x != y) {
+            int left = (cx - y) < 0 ? 0 : (cx - y);
+            int right = (cx + y) >= fe->width ? fe->width - 1 : (cx + y);
+            if (left <= right) SDL_RenderDrawLine(fe->renderer, left, y4, right, y4);
+        }
+
+        y++;
+        radius_error += y_change;
+        y_change += 2;
+        if (2 * radius_error + x_change > 0) {
+            x--;
+            radius_error += x_change;
+            x_change += 2;
         }
     }
 }
