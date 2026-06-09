@@ -167,8 +167,7 @@ void draw_circle(FocusEngine *fe, Vector2D center, float r, Color c)
     int radius_error = 0;
 
     while (x >= y) {
-        // Tracciamo le linee per la metà superiore e inferiore (accoppiate specchiate solo in Y)
-        // Questo disegna i blocchi centrali del cerchio
+        // draw bottom half, mirrored on x axis.
         int y1 = cy + y;
         int y2 = cy - y;
         if (y1 >= 0 && y1 < fe->height) {
@@ -176,13 +175,13 @@ void draw_circle(FocusEngine *fe, Vector2D center, float r, Color c)
             int right = (cx + x) >= fe->width ? fe->width - 1 : (cx + x);
             if (left <= right) SDL_RenderDrawLine(fe->renderer, left, y1, right, y1);
         }
-        if (y2 >= 0 && y2 < fe->height && y != 0) { // evita di ridisegnare il centro due volte se y == 0
+        if (y2 >= 0 && y2 < fe->height && y != 0) { 
             int left = (cx - x) < 0 ? 0 : (cx - x);
             int right = (cx + x) >= fe->width ? fe->width - 1 : (cx + x);
             if (left <= right) SDL_RenderDrawLine(fe->renderer, left, y2, right, y2);
         }
 
-        // Questo disegna le "punte" (i poli) alto e basso del cerchio, invertendo le coordinate
+        // draw upper half, mirrored on x axis
         int y3 = cy + x;
         int y4 = cy - x;
         if (y3 >= 0 && y3 < fe->height && x != y) {
@@ -196,6 +195,7 @@ void draw_circle(FocusEngine *fe, Vector2D center, float r, Color c)
             if (left <= right) SDL_RenderDrawLine(fe->renderer, left, y4, right, y4);
         }
 
+		// update the perimeter
         y++;
         radius_error += y_change;
         y_change += 2;
@@ -207,7 +207,8 @@ void draw_circle(FocusEngine *fe, Vector2D center, float r, Color c)
     }
 }
 
-// draw a circle with a fixed radius in screen pixels ( NOT WORLD COORDINATE)
+// draw a circle with a fixed radius in screen pixels ( NOT WORLD COORDINATE). 
+// The function uses the Scanline Circle Algorithm
 void draw_circle_screen(FocusEngine *fe, Vector2D center, int pixel_r, Color c)
 {
     SDL_SetRenderDrawColor(fe->renderer, c.r, c.g, c.b, c.a);
@@ -228,8 +229,7 @@ void draw_circle_screen(FocusEngine *fe, Vector2D center, int pixel_r, Color c)
     int radius_error = 0;
 
     while (x >= y) {
-        // Tracciamo le linee per la metà superiore e inferiore (accoppiate specchiate solo in Y)
-        // Questo disegna i blocchi centrali del cerchio
+        // draw bottom half, mirrored on x axis.
         int y1 = cy + y;
         int y2 = cy - y;
         if (y1 >= 0 && y1 < fe->height) {
@@ -237,13 +237,13 @@ void draw_circle_screen(FocusEngine *fe, Vector2D center, int pixel_r, Color c)
             int right = (cx + x) >= fe->width ? fe->width - 1 : (cx + x);
             if (left <= right) SDL_RenderDrawLine(fe->renderer, left, y1, right, y1);
         }
-        if (y2 >= 0 && y2 < fe->height && y != 0) { // evita di ridisegnare il centro due volte se y == 0
+        if (y2 >= 0 && y2 < fe->height && y != 0) {
             int left = (cx - x) < 0 ? 0 : (cx - x);
             int right = (cx + x) >= fe->width ? fe->width - 1 : (cx + x);
             if (left <= right) SDL_RenderDrawLine(fe->renderer, left, y2, right, y2);
         }
 
-        // Questo disegna le "punte" (i poli) alto e basso del cerchio, invertendo le coordinate
+        // draw upper half, mirrored on x axis
         int y3 = cy + x;
         int y4 = cy - x;
         if (y3 >= 0 && y3 < fe->height && x != y) {
@@ -257,6 +257,7 @@ void draw_circle_screen(FocusEngine *fe, Vector2D center, int pixel_r, Color c)
             if (left <= right) SDL_RenderDrawLine(fe->renderer, left, y4, right, y4);
         }
 
+		// update the perimeter
         y++;
         radius_error += y_change;
         y_change += 2;
