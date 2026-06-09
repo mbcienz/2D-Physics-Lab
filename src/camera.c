@@ -10,13 +10,21 @@ void camera_init(Camera2D *camera)
 }
 
 // zoom in or out
-void camera_zoom(Camera2D *camera, float delta_scale)
+void camera_zoom(Camera2D *camera, float scale, float offsetx, float offsety)
 {
-    camera->scale *= delta_scale;
+    float old_scale = camera->scale;
+    camera->scale *= scale;
     
     // clamp scale to prevent inversion or extreme values
     if (camera->scale < 0.1f)   camera->scale = 0.1f;
     if (camera->scale > 1000.0f) camera->scale = 1000.0f;
+    
+    float delta_scale = camera->scale - old_scale;
+
+    // update the offset to zoom-in/out from the mouse position
+    camera->offsetx -= offsetx * delta_scale;
+    camera->offsety += offsety * delta_scale;
+    
 }
 
 // traslate in the 2D plane

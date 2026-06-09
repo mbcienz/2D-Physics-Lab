@@ -17,8 +17,10 @@ void input_init(InputState *input)
     input->mouse_delta_y = 0;
 
     input->mouse_left_down = false;
+    input->mouse_middle_down = false;
     input->mouse_right_down = false;
     input->mouse_left_clicked = false;
+    input->mouse_middle_clicked = false;
     input->mouse_right_clicked = false;
 
     input->click_x = 0;
@@ -35,8 +37,9 @@ void input_update(InputState *input)
 {
     SDL_Event event;
 
-    // 1. RESET DEGLI EVENTI ISTANTANEI (durano solo 1 frame)
+    // reset instantaneous events
     input->mouse_left_clicked = false;
+    input->mouse_middle_clicked = false;
     input->mouse_right_clicked = false;
     input->mouse_wheel_scroll = 0;
     input->mouse_delta_x = 0;
@@ -46,13 +49,14 @@ void input_update(InputState *input)
         input->keys_just_pressed[i] = false;
     }
 
-    // 2. AGGIORNAMENTO STATO CONTINUO (Mouse posizione e tasti premuti)
+    // update mouse state
     Uint32 mouse_buttons = SDL_GetMouseState(&input->mouse_x, &input->mouse_y);
 
     input->mouse_left_down = (mouse_buttons & SDL_BUTTON(SDL_BUTTON_LEFT)) != 0;
+    input->mouse_middle_down = (mouse_buttons & SDL_BUTTON(SDL_BUTTON_MIDDLE)) != 0;
     input->mouse_right_down = (mouse_buttons & SDL_BUTTON(SDL_BUTTON_RIGHT)) != 0;
 
-    // 3. SVUOTAMENTO CODA EVENTI SDL
+    // poll events
     while (SDL_PollEvent(&event)) 
     {
         switch (event.type) 
@@ -62,14 +66,14 @@ void input_update(InputState *input)
                 break;
 
             case SDL_KEYDOWN:
-                // Ignora la ripetizione automatica del sistema operativo se tieni premuto
                 if (event.key.repeat == 0) 
                 {
                     SDL_Scancode scancode = event.key.keysym.scancode;
                     if (scancode < SDL_NUM_SCANCODES) 
                     {
                         input->keys_down[scancode] = true;
-                        input->keys_just_pressed[scancode] = true; // Attivo solo per questo frame
+                        // this will be reset the next frame, so it's true only in this frame
+                        input->keys_just_pressed[scancode] = true; 
                     }
                 }
                 break;
@@ -86,21 +90,18 @@ void input_update(InputState *input)
 
             case SDL_MOUSEBUTTONDOWN:
                 if (event.button.button == SDL_BUTTON_LEFT) 
-                {
                     input->mouse_left_clicked = true;
-                    input->click_x = event.button.x;
-                    input->click_y = event.button.y;
-                }
+                else if (event.button.button == SDL_BUTTON_MIDDLE) 
+                    input->mouse_middle_clicked = true;
                 else if (event.button.button == SDL_BUTTON_RIGHT) 
-                {
                     input->mouse_right_clicked = true;
-                    input->click_x = event.button.x;
-                    input->click_y = event.button.y;
-                }
+                    
+                input->click_x = event.button.x;
+                input->click_y = event.button.y;
                 break;
 
             case SDL_MOUSEWHEEL:
-                input->mouse_wheel_scroll = event.wheel.y; // 1 = su, -1 = giù
+                input->mouse_wheel_scroll = event.wheel.y; // 1 = ip, -1 = down
                 break;
 
             case SDL_MOUSEMOTION:

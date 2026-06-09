@@ -17,9 +17,11 @@ typedef struct {
     int mouse_delta_y;
     
     bool mouse_left_down;      // left button down (continuous)
+    bool mouse_middle_down;    // middle button down (continuous)
     bool mouse_right_down;     // right button down (continuous)
     
     bool mouse_left_clicked;   // left click (toggle)
+    bool mouse_middle_clicked; // middle click (toggle)
     bool mouse_right_clicked;  // right click (toggle)
     
     int click_x;               // x position when click is true

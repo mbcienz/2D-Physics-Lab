@@ -23,13 +23,13 @@ int main(int argc, char *argv[])
         if (fe.input.window_closed)
             fe.running = false;
 
-        if (fe.input.mouse_left_down)
+        if (fe.input.mouse_middle_down)
             camera_pan(&fe.camera, fe.input.mouse_delta_x, fe.input.mouse_delta_y);
         
         if (fe.input.mouse_wheel_scroll > 0.0)
-            camera_zoom(&fe.camera, 1.1);
+            camera_zoom(&fe.camera, 1.1, screenx_to_coordx(&fe, fe.input.mouse_x), screeny_to_coordy(&fe, fe.input.mouse_y));
         else if (fe.input.mouse_wheel_scroll < 0.0)
-            camera_zoom(&fe.camera, 0.9);
+            camera_zoom(&fe.camera, 0.9, screenx_to_coordx(&fe, fe.input.mouse_x), screeny_to_coordy(&fe, fe.input.mouse_y));
 
         // draw
         start_frame(&fe);
