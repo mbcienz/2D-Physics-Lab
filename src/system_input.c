@@ -13,6 +13,8 @@ void input_init(InputState *input)
     // init the mouse state
     input->mouse_x = 0;
     input->mouse_y = 0;
+    input->mouse_delta_x = 0;
+    input->mouse_delta_y = 0;
 
     input->mouse_left_down = false;
     input->mouse_right_down = false;
@@ -37,6 +39,8 @@ void input_update(InputState *input)
     input->mouse_left_clicked = false;
     input->mouse_right_clicked = false;
     input->mouse_wheel_scroll = 0;
+    input->mouse_delta_x = 0;
+    input->mouse_delta_y = 0;
     for (int i = 0; i < SDL_NUM_SCANCODES; i++) 
     {
         input->keys_just_pressed[i] = false;
@@ -44,6 +48,7 @@ void input_update(InputState *input)
 
     // 2. AGGIORNAMENTO STATO CONTINUO (Mouse posizione e tasti premuti)
     Uint32 mouse_buttons = SDL_GetMouseState(&input->mouse_x, &input->mouse_y);
+
     input->mouse_left_down = (mouse_buttons & SDL_BUTTON(SDL_BUTTON_LEFT)) != 0;
     input->mouse_right_down = (mouse_buttons & SDL_BUTTON(SDL_BUTTON_RIGHT)) != 0;
 
@@ -96,6 +101,11 @@ void input_update(InputState *input)
 
             case SDL_MOUSEWHEEL:
                 input->mouse_wheel_scroll = event.wheel.y; // 1 = su, -1 = giù
+                break;
+
+            case SDL_MOUSEMOTION:
+                input->mouse_delta_x = event.motion.xrel;
+                input->mouse_delta_y = event.motion.yrel;
                 break;
         }
     }

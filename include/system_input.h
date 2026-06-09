@@ -12,6 +12,9 @@ typedef struct {
     // mouse state
     int mouse_x;               // x position
     int mouse_y;               // y position
+    // last mouse position
+    int mouse_delta_x;
+    int mouse_delta_y;
     
     bool mouse_left_down;      // left button down (continuous)
     bool mouse_right_down;     // right button down (continuous)

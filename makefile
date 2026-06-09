@@ -5,7 +5,7 @@ CC = gcc
 CFLAGS = -Iinclude -Wall -g
 
 # fetch sdl2 flags using pkg-config
-SDL_FLAGS = $(shell pkg-config --cflags --libs sdl2)
+SDL_FLAGS = $(shell pkg-config --cflags --libs sdl2 SDL2_ttf)
 
 # link the math library
 MATH_FLAGS = -lm
@@ -17,17 +17,18 @@ CORE_SRC = $(wildcard src/*.c)
 CORE_OBJ = $(CORE_SRC:.c=.o)
 
 # default rule if you just type 'make' (compiles everything)
-all: vector
+all: vector camera
 
 # target for the vector demo
 # run it with: make vector
 vector: $(CORE_OBJ) demo/drawing_vector.o
 	$(CC) $(CORE_OBJ) demo/drawing_vector.o -o vector_demo.exe $(SDL_FLAGS) $(MATH_FLAGS)
 
-# target for a future demo (example)
-# run it with: make sand
-# sand: $(CORE_OBJ) demo/falling_sand.o
-# 	$(CC) $(CORE_OBJ) demo/falling_sand.o -o sand_demo.exe $(SDL_FLAGS) $(MATH_FLAGS)
+#target for the camera control demo
+# run it with: make camera
+camera: $(CORE_OBJ) demo/camera_control.o
+	$(CC) $(CORE_OBJ) demo/camera_control.o -o camera_control.exe $(SDL_FLAGS) $(MATH_FLAGS)
+
 
 # compilation step for every individual .c file
 %.o: %.c

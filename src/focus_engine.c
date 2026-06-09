@@ -8,11 +8,10 @@ void engine_init(FocusEngine *fe, float width, float height)
 
 	fe->window = NULL;
 	fe->renderer = NULL; 
-
+	
+	// state
 	fe->running = false;
-	fe->offsetx = 0.0;
-	fe->offsety = 0.0; 
-	fe->scale = 40.0;
+	fe->show_fps = true;
 
 	// SDL init
 	if( SDL_Init(SDL_INIT_VIDEO) < 0 )
@@ -27,9 +26,20 @@ void engine_init(FocusEngine *fe, float width, float height)
 		printf("SDL Window and renderer creation error\n");
 		return;
 	}
+	
+	// Init the ttf font
+	if ( TTF_Init() == -1 )
+		printf("Error in TTF_Init()! You will not be able to see texts: %s", TTF_GetError());
 
+	// load the font
+    fe->font = TTF_OpenFont("assets/fonts/tecnico/TecnicoFino-xX70.ttf", 18);
+    if (!fe->font) {
+        printf("Errore caricamento font: %s\n", TTF_GetError());
+    }
+
+
+	camera_init(&fe->camera);
 	input_init(&fe->input);
-
 
 	fe->running = true;
 }
@@ -37,36 +47,57 @@ void engine_init(FocusEngine *fe, float width, float height)
 // destroy the engine
 void engine_destroy(FocusEngine *fe)
 {
+	// Close the font
+	if (fe->font) {
+        TTF_CloseFont(fe->font);
+    }
+	TTF_Quit();
+
 	fe->running = false; 
+	fe->show_fps = false; 
+
 	SDL_DestroyRenderer(fe->renderer); 
 	SDL_DestroyWindow(fe->window);
 	SDL_Quit();
 }
 
 
+// toggle running state
+void toggle_running(FocusEngine *fe)
+{
+	fe->running = !fe->running;
+}
+
+// toggle fps state
+void toggle_show_fpw(FocusEngine *fe)
+{
+	fe->show_fps = !fe->show_fps;
+}
+
+
 // convert x coordinate to screen coordinate
 float coordx_to_screenx(FocusEngine *fe, float x)
 {
-	return fe->width/2 + fe->offsetx + (x * fe->scale);
+	return fe->width/2 + fe->camera.offsetx + (x * fe->camera.scale);
 }
 
 
 // convert y coordinate to screen coordinate
 float coordy_to_screeny(FocusEngine *fe, float y)
 {
-	return fe->height/2 + fe->offsety - (y * fe->scale);
+	return fe->height/2 + fe->camera.offsety - (y * fe->camera.scale);
 }
 
 // convert screen x coordinate back to world coordinate
 float screenx_to_coordx(FocusEngine *fe, int x)
 {
-    return (x - (fe->width / 2.0f) - fe->offsetx) / fe->scale;
+    return (x - (fe->width / 2.0f) - fe->camera.offsetx) / fe->camera.scale;
 }
 
 // convert screen y coordinate back to world coordinate
 float screeny_to_coordy(FocusEngine *fe, int y)
 {
-    return ((fe->height / 2.0f) + fe->offsety - y) / fe->scale;
+    return ((fe->height / 2.0f) + fe->camera.offsety - y) / fe->camera.scale;
 }
 
 
@@ -102,32 +133,68 @@ void draw_grid(FocusEngine *fe)
 	SDL_SetRenderDrawColor(fe->renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
 	SDL_RenderDrawLine(fe->renderer, 0, coordy_to_screeny(fe, 0.0), fe->width, coordy_to_screeny(fe, 0.0));
 
-	// origin : blue.
-	// The origin is a circle, so we have to draw every pixel of the area. 
-	int r = 5; // 5px radius
+	// origin : yellow.
+	// The origin is a circle in (0, 0)
+	int r = 5.0; // 5px radius
     Color c = {255, 255, 0, 255};
-	draw_circle(fe, coordx_to_screenx(fe, 0.0), coordy_to_screeny(fe, 0.0), r, c);	
+	Vector2D circle = {0.0 , 0.0};
+	draw_circle_screen(fe, circle, r, c);	
 
 	// set the color back to black
 	SDL_SetRenderDrawColor(fe->renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 }
 
 
-// draw a circle
-void draw_circle(FocusEngine *fe, float xc, float yc, float r, Color c)
+// draw a circle ( IN WORLD COORDINATE )
+void draw_circle(FocusEngine *fe, Vector2D center, float r, Color c)
 {
 	SDL_SetRenderDrawColor(fe->renderer, c.r, c.g, c.b, c.a);
 	int i, j;
-	
-	for ( i = xc-r; i < xc + r; i++ )
+
+	int screen_cx = coordx_to_screenx(fe, center.x);
+    int screen_cy = coordy_to_screeny(fe, center.y);
+	int screen_r = (int)(r * fe->camera.scale);
+	if (screen_r <= 0) return;
+
+	for ( i = screen_cx - screen_r; i <= screen_cx + screen_r; i++ )
 	{
-		for( j = yc-r; j < yc + r; j++)
+		for( j = screen_cy - screen_r ; j <= screen_cy + screen_r; j++)
 		{
-			if( pow((i-xc), 2) + pow((j-yc), 2) <= r * r )
+			int dx = i - screen_cx;
+            int dy = j - screen_cy;
+			if( dx * dx + dy * dy <= screen_r * screen_r )
 				SDL_RenderDrawPoint(fe->renderer, i, j);
 		}
 	}
 }
+
+// draw a circle with a fixed radius in screen pixels ( NOT WORLD COORDINATE)
+void draw_circle_screen(FocusEngine *fe, Vector2D center, int pixel_r, Color c)
+{
+    SDL_SetRenderDrawColor(fe->renderer, c.r, c.g, c.b, c.a);
+
+    // center is still converted because it tracks pan/zoom position
+    int screen_cx = coordx_to_screenx(fe, center.x);
+    int screen_cy = coordy_to_screeny(fe, center.y);
+
+    if (pixel_r <= 0) return;
+
+    int i, j;
+    for (i = screen_cx - pixel_r; i <= screen_cx + pixel_r; i++)
+    {
+        for (j = screen_cy - pixel_r; j <= screen_cy + pixel_r; j++)
+        {
+            int dx = i - screen_cx;
+            int dy = j - screen_cy;
+
+            if ((dx * dx + dy * dy) <= (pixel_r * pixel_r))
+            {
+                SDL_RenderDrawPoint(fe->renderer, i, j);
+            }
+        }
+    }
+}
+
 
 
 // drawing a vector
@@ -136,6 +203,57 @@ void draw_vector(FocusEngine *fe, AppliedVector2D v, Color c)
 	SDL_SetRenderDrawColor(fe->renderer, c.r, c.g, c.b, c.a);
     SDL_RenderDrawLine(fe->renderer, coordx_to_screenx(fe, v.origin.x), coordy_to_screeny(fe, v.origin.y), 
                                     coordx_to_screenx(fe, v.end.x), coordy_to_screeny(fe, v.end.y));
+	draw_circle_screen(fe, v.end, 5.0, c);
+}
+
+
+// show FPS
+void render_fps(FocusEngine *fe)
+{
+	// if font doesn't load properly don't render
+	if (!fe->show_fps || !fe->font) return;
+
+    static uint32_t last_time = 0;
+    static int fps = 0;				// fps count
+    static int frame_count = 0;		// frame count
+
+    uint32_t current_time = SDL_GetTicks();
+    frame_count++;
+
+    if (current_time - last_time >= 1000) {
+        fps = frame_count;
+        frame_count = 0;
+        last_time = current_time;
+    }
+
+    // prepare the text, for example "FPS : 144"
+    char fps_text[20];
+    sprintf(fps_text, "FPS: %d", fps);
+
+    // prepare a surface and generate the white text
+    SDL_Color text_color = { 255, 255, 255, 255 };
+    SDL_Surface *text_surface = TTF_RenderText_Blended(fe->font, fps_text, text_color);
+    if (!text_surface) return;
+
+    // load the text to gpu as texture
+    SDL_Texture *text_texture = SDL_CreateTextureFromSurface(fe->renderer, text_surface);
+    
+    if (text_texture) {
+        // place  the text in the top right of the screen
+        SDL_Rect dest_rect = { 
+            fe->width - text_surface->w - 15, 	// left margin
+            15,               					// top margin
+            text_surface->w,   					// surface width 
+            text_surface->h 					// surface height
+        };
+
+        SDL_RenderCopy(fe->renderer, text_texture, NULL, &dest_rect);
+
+        // delete the resources
+        SDL_DestroyTexture(text_texture);
+    }
+
+    SDL_FreeSurface(text_surface);
 }
 
 
@@ -150,5 +268,7 @@ void start_frame(FocusEngine *fe)
 // end the drawing frame
 void end_frame(FocusEngine *fe)
 {
+	if ( fe->show_fps )
+		render_fps(fe);
     SDL_RenderPresent(fe->renderer);
 }
