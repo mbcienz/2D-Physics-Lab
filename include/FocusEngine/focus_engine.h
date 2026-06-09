@@ -23,6 +23,10 @@ typedef struct
     InputState input;
     Camera2D camera;
 
+    // time control fields
+    uint32_t last_frame_ticks;  // last frame tick
+    double delta_time;          // frame duration in seconds
+
 } FocusEngine;
 
 

@@ -5,10 +5,13 @@ void engine_init(FocusEngine *fe, float width, float height)
 {
 	fe->width = width;
 	fe->height = height; 
-
+    
 	fe->window = NULL;
 	fe->renderer = NULL; 
 	
+    // time control
+    fe->last_frame_ticks = SDL_GetTicks();
+    fe->delta_time = 0.0;
 	// state
 	fe->running = false;
 	fe->show_fps = true;
@@ -334,6 +337,14 @@ void render_fps(FocusEngine *fe)
 // start the drawing frame
 void start_frame(FocusEngine *fe)
 {
+    uint32_t current_tick = SDL_GetTicks();
+    uint32_t delta_time = current_tick - fe->last_frame_ticks;
+
+    // convert ms in seconds
+    fe->delta_time = delta_time / 1000.0; 
+
+    fe->last_frame_ticks = current_tick;
+
     SDL_SetRenderDrawColor(fe->renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 	SDL_RenderClear(fe->renderer);
 }
