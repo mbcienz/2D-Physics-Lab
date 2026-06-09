@@ -1,4 +1,4 @@
-#include "focus_engine.h"
+#include "FocusEngine/focus_engine.h"
 
 // init the engine
 void engine_init(FocusEngine *fe, float width, float height)

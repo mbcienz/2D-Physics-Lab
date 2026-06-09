@@ -2,9 +2,9 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include <stdbool.h>
-#include "vector.h"
-#include "system_input.h"
-#include "camera.h"
+#include "FocusEngine/vector.h"
+#include "FocusEngine/system_input.h"
+#include "FocusEngine/camera.h"
 
 typedef struct
 {

@@ -3,7 +3,7 @@
 #include "const.h"
 #include <math.h>
 #include <stdlib.h>
-#include "math_utility.h"
+#include "FocusEngine/math_utility.h"
 
 typedef struct
 {

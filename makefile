@@ -11,7 +11,7 @@ SDL_FLAGS = $(shell pkg-config --cflags --libs sdl2 SDL2_ttf)
 MATH_FLAGS = -lm
 
 # automatically find all .c files inside the src directory
-CORE_SRC = $(wildcard src/*.c)
+CORE_SRC = $(shell find src -name "*.c")
 
 # automatically generate object files (.o) for the core files
 CORE_OBJ = $(CORE_SRC:.c=.o)
@@ -36,4 +36,4 @@ camera: $(CORE_OBJ) demo/camera_control.o
 
 # clean up object files and all executables
 clean:
-	rm -f src/*.o demo/*.o *.exe
+	rm -f $(CORE_OBJ) demo/*.o *.exe

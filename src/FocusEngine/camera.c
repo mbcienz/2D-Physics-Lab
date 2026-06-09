@@ -1,4 +1,4 @@
- #include "camera.h"
+ #include "FocusEngine/camera.h"
 
 // init the camera
 void camera_init(Camera2D *camera)

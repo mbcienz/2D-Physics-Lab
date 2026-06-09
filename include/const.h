@@ -1,1 +1,1 @@
-typedef float type_t;
+typedef double type_t;
