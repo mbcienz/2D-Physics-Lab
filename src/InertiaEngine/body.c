@@ -55,3 +55,18 @@ void body_apply_force(Body *b, double fx, double fy)
     b->fx += fx;
     b->fy += fy;
 }
+
+
+// get circle structure properties
+CircleShape get_circle_properties(Body *b)
+{
+    assert(b->shape.type == SHAPE_CIRCLE);
+    return b->shape.data.circle;
+}
+
+// get box structure properties
+BoxShape get_box_properties(Body *b)
+{
+    assert(b->shape.type == SHAPE_BOX);
+    return b->shape.data.box;
+}

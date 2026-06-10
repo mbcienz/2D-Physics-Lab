@@ -8,6 +8,19 @@ void inertia_init(InertiaEngine *ie, double gravityx, double gravityy)
     ie->gravityy = gravityy;
 }
 
+// reset all the forces
+void inertia_reset_forces(InertiaEngine *ie)
+{
+    int i; 
+    // reset the forces to every body
+    for ( i = 0; i < ie->body_count; i++ )
+    {   
+        Body *b = &ie->bodies[i];
+        b->fx = 0.0;
+        b->fy = 0.0;
+    }
+}
+
 
 // create circle body 
 Body* inertia_create_circle(InertiaEngine *ie, double px, double py, double vx, double vy, float radius, double mass)
@@ -66,11 +79,10 @@ void inertia_update(InertiaEngine *ie)
         // update the position : p = p0 + v * time_step
         b->px += b->vx * TIME_STEP;
         b->py += b->vy * TIME_STEP;
-
-        // reset the forces for the next simulation step
-        b->fx = 0.0;
-        b->fy = 0.0;
+        
     }
 
 
 }
+
+

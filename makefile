@@ -17,23 +17,24 @@ CORE_SRC = $(shell find src -name "*.c")
 CORE_OBJ = $(CORE_SRC:.c=.o)
 
 # default rule if you just type 'make' (compiles everything)
-all: vector camera body
+all: vector camera body ecs
 
 # target for the vector demo
 # run it with: make vector
 vector: $(CORE_OBJ) demo/drawing_vector.o
 	$(CC) $(CORE_OBJ) demo/drawing_vector.o -o vector_demo.exe $(SDL_FLAGS) $(MATH_FLAGS)
 
-#target for the camera control demo
 # run it with: make camera
 camera: $(CORE_OBJ) demo/camera_control.o
 	$(CC) $(CORE_OBJ) demo/camera_control.o -o camera_control.exe $(SDL_FLAGS) $(MATH_FLAGS)
 
-
-#target for the body and gravity demo
 # run it with: make body
 body: $(CORE_OBJ) demo/body_and_gravity.o
 	$(CC) $(CORE_OBJ) demo/body_and_gravity.o -o body_and_gravity.exe $(SDL_FLAGS) $(MATH_FLAGS)
+
+# run it with: make ecs
+ecs	: $(CORE_OBJ) demo/ecs.o
+	$(CC) $(CORE_OBJ) demo/ecs.o -o ecs.exe $(SDL_FLAGS) $(MATH_FLAGS)
 
 # compilation step for every individual .c file
 %.o: %.c

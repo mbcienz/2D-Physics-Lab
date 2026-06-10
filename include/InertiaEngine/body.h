@@ -1,3 +1,5 @@
+#include <assert.h>
+
 typedef enum
 {
     SHAPE_CIRCLE,
@@ -53,3 +55,9 @@ void body_init_box(Body *b, double px, double py,  double vx, double vy, float w
 
 // apply force to a body
 void body_apply_force(Body *b, double fx, double fy);
+
+// get circle structure properties
+CircleShape get_circle_properties(Body *b);
+
+// get box structure properties
+BoxShape get_box_properties(Body *b);

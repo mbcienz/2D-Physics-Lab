@@ -23,6 +23,9 @@ typedef struct
 // init the physics engine
 void inertia_init(InertiaEngine *ie, double gravityx, double gravityy);
 
+// reset all the forces
+void inertia_reset_forces(InertiaEngine *ie);
+
 // create circle body 
 Body* inertia_create_circle(InertiaEngine *ie, double px, double py, double vx, double vy, float radius, double mass);
 

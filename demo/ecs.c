@@ -1,14 +1,7 @@
 #include "FocusEngine/focus_engine.h"
 #include "InertiaEngine/inertia_engine.h"
+#include "ECS/ecs.h"
 #include <stdlib.h>
-
-// for a simple demo, use a struct to connect the physical body with the graphic properties (color in this case).
-typedef struct
-{
-    Body *b; 
-    Color c;
-}Object; 
-
 
 int main(int argc, char *argv[])
 {
@@ -16,11 +9,13 @@ int main(int argc, char *argv[])
     engine_init(&fe, 900, 600);
 
     InertiaEngine ie; 
-    inertia_init(&ie, 0.0, -9.81);
+    inertia_init(&ie, 3.0, -9.81);
 
-    srand(0);   
-    Object obj[MAX_BODIES];
-    int count = 0; 
+    ECS ecs; 
+    ecs_scene_init(&ecs, &fe, &ie);
+    //ecs_toggle_forces_draw(&ecs);
+
+    srand(0); 
 
     // accumulator for the phyysics engine
     double accumulator = 0.0;
@@ -50,13 +45,14 @@ int main(int argc, char *argv[])
         {            
             Body *b = inertia_create_circle(&ie, screenx_to_coordx(&fe, fe.input.click_x), screeny_to_coordy(&fe, fe.input.click_y),
                                                 0.0, 0.0, (rand() % 5) + 1.0, (rand() % 100) + 1.0);
-            obj[count].b = b;
-            obj[count].c.r = rand() % 256;
-            obj[count].c.g = rand() % 256;
-            obj[count].c.b = rand() % 256;
-            obj[count].c.a = 255;
-            count++;
             
+            Color c = {
+                rand() % 256, // red
+                rand() % 256, // green
+                rand() % 256, // blue
+                255, // alpha
+            };           
+            ecs_create_entity(&ecs, b, c); 
         }
 
         while ( accumulator >= TIME_STEP)
@@ -68,11 +64,8 @@ int main(int argc, char *argv[])
 
         // draw
         draw_grid(&fe);
-        for (int i = 0;  i < count; i++)
-        {   
-            Vector2D center = { obj[i].b->px, obj[i].b->py };
-            draw_circle(&fe, center, obj[i].b->shape.data.circle.radius, obj[i].c );
-        }
+        
+        ecs_draw_scene(&ecs);
 
         end_frame(&fe);
 
