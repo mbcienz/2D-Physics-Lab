@@ -277,10 +277,54 @@ void draw_circle_screen(FocusEngine *fe, Vector2D center, int pixel_r, Color c)
 // drawing a vector
 void draw_vector(FocusEngine *fe, AppliedVector2D v, Color c)
 {
-	SDL_SetRenderDrawColor(fe->renderer, c.r, c.g, c.b, c.a);
-    SDL_RenderDrawLine(fe->renderer, coordx_to_screenx(fe, v.origin.x), coordy_to_screeny(fe, v.origin.y), 
-                                    coordx_to_screenx(fe, v.end.x), coordy_to_screeny(fe, v.end.y));
-	draw_circle_screen(fe, v.end, 5.0, c);
+    // calculate direction vector in world space
+    double dx = v.end.x - v.origin.x;
+    double dy = v.end.y - v.origin.y;
+    double length = sqrt(dx * dx + dy * dy);
+
+    SDL_SetRenderDrawColor(fe->renderer, c.r, c.g, c.b, c.a);
+
+    // transform origin and end to screen space (pixels) and draw main line
+    int sx_start = coordx_to_screenx(fe, v.origin.x);
+    int sy_start = coordy_to_screeny(fe, v.origin.y);
+    int sx_end   = coordx_to_screenx(fe, v.end.x);
+    int sy_end   = coordy_to_screeny(fe, v.end.y);
+    
+    SDL_RenderDrawLine(fe->renderer, sx_start, sy_start, sx_end, sy_end);
+
+    // calculate arrow head points in world space
+    if (length > 0.0) 
+    {
+        // normalize direction vector to get the unit vector (versor)
+        double ux = dx / length;
+        double uy = dy / length;
+
+        // arrow head dimensions in world units (meters)
+        float arrow_length = 0.4f; 
+        float arrow_width  = 0.2f;  
+
+        // perpendicular vector (rotated 90 degrees counter-clockwise)
+        double px = -uy;
+        double py = ux;
+
+        // calculate the two rear points of the arrow head
+        Vector2D target1;
+        target1.x = v.end.x - (arrow_length * ux) + (arrow_width * px);
+        target1.y = v.end.y - (arrow_length * uy) + (arrow_width * py);
+
+        Vector2D target2;
+        target2.x = v.end.x - (arrow_length * ux) - (arrow_width * px);
+        target2.y = v.end.y - (arrow_length * uy) - (arrow_width * py);
+
+        // transform arrow head points to screen space and draw lines
+        int sx_t1 = coordx_to_screenx(fe, target1.x);
+        int sy_t1 = coordy_to_screeny(fe, target1.y);
+        int sx_t2 = coordx_to_screenx(fe, target2.x);
+        int sy_t2 = coordy_to_screeny(fe, target2.y);
+
+        SDL_RenderDrawLine(fe->renderer, sx_end, sy_end, sx_t1, sy_t1);
+        SDL_RenderDrawLine(fe->renderer, sx_end, sy_end, sx_t2, sy_t2);
+    }
 }
 
 
